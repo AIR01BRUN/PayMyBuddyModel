@@ -13,11 +13,11 @@ import com.pay_my_buddy.Service.UserService;
 import jakarta.servlet.http.HttpSession;
 
 @Controller
-public class Sold {
+public class SoldController {
 
     private UserService userService;
 
-    public Sold(UserService userService) {
+    public SoldController(UserService userService) {
         this.userService = userService;
 
     }
@@ -40,11 +40,9 @@ public class Sold {
             redirectAttributes.addFlashAttribute("error", "Doit etre supérieur a zero");
             return "redirect:/sold";
         }
-        double soldPercent = userService.monetizationPercentage(sold);
-        User bank = userService.getUserById(1);
-        userService.addSold(bank, soldPercent);
-        userService.addSold(currentUser, sold - soldPercent);
-        redirectAttributes.addFlashAttribute("success", sold - soldPercent + "EUR Ajouter");
+
+        userService.addSold(currentUser, sold);
+        redirectAttributes.addFlashAttribute("success", sold + "EUR Ajouter");
         return "redirect:/sold";
     }
 

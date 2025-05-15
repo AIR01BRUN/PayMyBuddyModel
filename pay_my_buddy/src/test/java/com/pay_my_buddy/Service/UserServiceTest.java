@@ -13,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.pay_my_buddy.DTO.RelationDTO;
+import com.pay_my_buddy.Model.Transaction;
 import com.pay_my_buddy.Model.User;
 import com.pay_my_buddy.Repository.UserRepository;
 
@@ -33,6 +34,9 @@ class UserServiceTest {
         User user01 = new User(1, "aa", "aa@aa.com", "aa");
         User user02 = new User(2, "bb", "bb@b.com", "bb");
         User user03 = new User(3, "cc", "cc@c.com", "cc");
+        user01.setAmount(100);
+        user02.setAmount(50);
+        user03.setAmount(0);
         user01.getConnections().add(user02);
         user02.getConnections().add(user01);
         mockUser.add(user01);
@@ -181,6 +185,55 @@ class UserServiceTest {
 
         assertNotNull(hashedPassword);
         assertNotEquals(password, hashedPassword);
+    }
+
+    @Test
+    void hasAmountTrue() {
+        boolean hasAmount = userService.hasAmount(mockUser.get(0), 50);
+
+        assertTrue(hasAmount);
+
+    }
+
+    @Test
+    void hasAmountFalse() {
+        boolean hasAmount = userService.hasAmount(mockUser.get(0), 500);
+
+        assertFalse(hasAmount);
+
+    }
+
+    @Test
+    void testSoldTransfer() {
+        User sender = mockUser.get(0);
+        User receiver = mockUser.get(1);
+        Transaction transaction = new Transaction("test", 10, sender, receiver);
+
+        when(userRepository.findById(1)).thenReturn(Optional.of(sender));
+        when(userRepository.findById(2)).thenReturn(Optional.of(receiver));
+
+        userService.soldTransfer(transaction);
+
+        assertEquals(90 - userService.monetizationPercentage(10),
+                sender.getAmount() - userService.monetizationPercentage(10));
+        assertEquals(60, receiver.getAmount());
+
+    }
+
+    @Test
+    void testAddSold() {
+        User receiver = mockUser.get(2); // user03: 0
+
+        userService.addSold(receiver, 45);
+
+        assertEquals(45, receiver.getAmount());
+        verify(userRepository, times(1)).save(receiver);
+    }
+
+    @Test
+    void testMonetizationPercentage() {
+        double result = userService.monetizationPercentage(200);
+        assertEquals(1, result);
     }
 
 }

@@ -10,6 +10,9 @@ public class RelationDTO {
         this.name = name;
     }
 
+    public RelationDTO() {
+    }
+
     public int getId() {
         return id;
     }

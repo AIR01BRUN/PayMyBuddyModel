@@ -1,6 +1,7 @@
 package com.pay_my_buddy.Service;
 
 import com.pay_my_buddy.DTO.RelationDTO;
+import com.pay_my_buddy.Model.Transaction;
 import com.pay_my_buddy.Model.User;
 
 import java.security.MessageDigest;
@@ -130,11 +131,17 @@ public class UserService {
         return user.getAmount() >= amount;
     }
 
-    public void soldTransfer(User receiver, User sender, double amount) {
-        receiver.setAmount(receiver.getAmount() + amount);
-        saveUser(receiver);
-        sender.setAmount(sender.getAmount() - amount);
-        saveUser(sender);
+    public void soldTransfer(Transaction transaction) {
+        User sender = transaction.getSender();
+        User receiver = transaction.getReceiver();
+        double amount = transaction.getAmount();
+
+        double soldPercent = monetizationPercentage(amount);
+        User bank = getUserById(1);
+        addSold(receiver, amount);
+        addSold(sender, -amount - soldPercent);
+        addSold(bank, soldPercent);
+
     }
 
     public void addSold(User receiver, double amount) {
@@ -143,7 +150,7 @@ public class UserService {
     }
 
     public double monetizationPercentage(double amount) {
-        return amount * 0.05;
+        return amount * 0.005;
     }
 
 }

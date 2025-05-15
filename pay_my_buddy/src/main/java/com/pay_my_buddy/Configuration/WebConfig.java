@@ -1,6 +1,5 @@
 package com.pay_my_buddy.Configuration;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -10,8 +9,11 @@ import com.pay_my_buddy.Component.SessionInterceptor;
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
-    @Autowired
     private SessionInterceptor sessionInterceptor;
+
+    public WebConfig(SessionInterceptor sessionInterceptor) {
+        this.sessionInterceptor = sessionInterceptor;
+    }
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {

@@ -14,6 +14,9 @@ public class TransfereDTO {
         this.amount = amount;
     }
 
+    public TransfereDTO() {
+    }
+
     public int getIdReceiver() {
         return idReceiver;
     }

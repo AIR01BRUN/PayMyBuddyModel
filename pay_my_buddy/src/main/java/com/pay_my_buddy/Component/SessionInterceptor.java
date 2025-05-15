@@ -15,15 +15,16 @@ public class SessionInterceptor implements HandlerInterceptor {
         this.sessionService = sessionService;
     }
 
+    // Rediriger vers la page de connexion si l'utilisateur n'est pas connecté
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
             throws Exception {
-        // Vérifier si l'utilisateur est connecté
+
         if (!sessionService.isUserLoggedIn(request.getSession())) {
-            // Rediriger vers la page de connexion si l'utilisateur n'est pas connecté
+
             response.sendRedirect("/login");
-            return false; // Arrêter l'exécution de la requête
+            return false;
         }
-        return true; // Continuer l'exécution de la requête
+        return true;
     }
 }

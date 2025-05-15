@@ -1,24 +1,35 @@
 package com.pay_my_buddy.Controller;
 
+import com.pay_my_buddy.DTO.TransactionDTO;
 import com.pay_my_buddy.Model.User;
 import com.pay_my_buddy.Service.TransactionService;
 import com.pay_my_buddy.Service.UserService;
-import jakarta.servlet.http.HttpSession;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.*;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.springframework.ui.Model;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import jakarta.servlet.http.HttpSession;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import java.util.Arrays;
+import java.util.List;
+import com.pay_my_buddy.DTO.RelationDTO;
+import com.pay_my_buddy.DTO.TransfereDTO;
 
-class TransactionControllerTest {
+public class TransactionControllerTest {
 
     @Mock
     private UserService userService;
 
     @Mock
     private TransactionService transactionService;
+
+    @Mock
+    private Model model;
 
     @Mock
     private HttpSession session;
@@ -29,56 +40,82 @@ class TransactionControllerTest {
     @InjectMocks
     private TransactionController transactionController;
 
-    User sender;
-    User receiver;
-
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        sender = new User(1, "Sender", "sender@example.com", "password");
-        receiver = new User(2, "Receiver", "receiver@example.com", "password");
-
-        when(session.getAttribute("userID")).thenReturn(sender.getId());
-        when(userService.getUserById(sender.getId())).thenReturn(sender);
-        when(userService.getUserById(receiver.getId())).thenReturn(receiver);
+        transactionController = new TransactionController(userService, transactionService);
     }
 
     @Test
-    void testShowNavigationPage_ReturnsTransactionView() {
-        var model = mock(org.springframework.ui.Model.class);
+    void testShowTransactionPage() {
+        int userId = 1;
+        User user = new User();
+        user.setId(userId);
+        List<RelationDTO> relations = Arrays.asList(new RelationDTO(), new RelationDTO());
+        List<TransfereDTO> transfers = Arrays.asList(new TransfereDTO(), new TransfereDTO());
 
-        String view = transactionController.showTransactionPage(model, session);
+        when(session.getAttribute("userID")).thenReturn(userId);
+        when(userService.getUserById(userId)).thenReturn(user);
+        when(userService.getRelationsUser(user)).thenReturn(relations);
+        when(transactionService.getTransfereDTO(userId)).thenReturn(transfers);
 
+        String viewName = transactionController.showTransactionPage(model, session);
+
+        assertEquals("transaction", viewName);
         verify(model).addAttribute("activePage", "transaction");
-        verify(model).addAttribute("relations", userService.getRelationsUser(sender));
-        verify(model).addAttribute("transferes", transactionService.getTransfereDTO(sender.getId()));
-        assertEquals("transaction", view);
+        verify(model).addAttribute("relations", relations);
+
     }
 
     @Test
-    void tesTransaction_NoRelationSelected() {
+    void testTransaction_WithError() {
+        int userId = 1;
+        String relation = "friend@example.com";
+        String amount = "10.00";
+        String description = "Lunch";
+        User user = new User();
+        user.setId(userId);
 
-        String relation = "0";
-        String description = "Payment for services";
-        String amount = "100";
+        TransactionDTO transactionDTO = new TransactionDTO();
+        transactionDTO.setError("Insufficient funds");
 
-        String view = transactionController.transaction(relation, description, amount, redirectAttributes, session);
+        when(session.getAttribute("userID")).thenReturn(userId);
+        when(userService.getUserById(userId)).thenReturn(user);
+        when(transactionService.processTransaction(userId, relation, amount, description)).thenReturn(transactionDTO);
 
-        verify(redirectAttributes).addFlashAttribute("error", "Sélectionnez une relation.");
-        assertEquals("redirect:/transaction", view);
+        String result = transactionController.transaction(relation, amount, description, redirectAttributes, session);
+
+        assertEquals("redirect:/transaction", result);
+        verify(redirectAttributes).addFlashAttribute("error", "Insufficient funds");
+        verify(userService, never()).soldTransfer(any());
+        verify(redirectAttributes, never()).addFlashAttribute(eq("success"), any());
     }
 
     @Test
-    void testTransaction_EmptyAmount() {
+    void testTransaction_Success() {
+        int userId = 1;
+        String relation = "friend@example.com";
+        String amount = "20.00";
+        String description = "Dinner";
+        User user = new User();
+        user.setId(userId);
 
-        String relation = String.valueOf(receiver.getId());
-        String description = "Payment for services";
-        String amount = "";
+        TransactionDTO transactionDTO = new TransactionDTO();
+        transactionDTO.setError(null);
+        transactionDTO.setSuccess("Transaction successful");
+        // Assuming Transaction is a class in your model
+        com.pay_my_buddy.Model.Transaction transaction = new com.pay_my_buddy.Model.Transaction();
+        transactionDTO.setTransaction(transaction);
 
-        String view = transactionController.transaction(relation, description, amount, redirectAttributes, session);
+        when(session.getAttribute("userID")).thenReturn(userId);
+        when(userService.getUserById(userId)).thenReturn(user);
+        when(transactionService.processTransaction(userId, relation, amount, description)).thenReturn(transactionDTO);
 
-        verify(redirectAttributes).addFlashAttribute("error", "Entrez un montant valide.");
-        assertEquals("redirect:/transaction", view);
+        String result = transactionController.transaction(relation, amount, description, redirectAttributes, session);
+
+        assertEquals("redirect:/transaction", result);
+        verify(userService).soldTransfer(transaction);
+        verify(redirectAttributes).addFlashAttribute("success", "Transaction successful");
+        verify(redirectAttributes, never()).addFlashAttribute(eq("error"), any());
     }
-
 }

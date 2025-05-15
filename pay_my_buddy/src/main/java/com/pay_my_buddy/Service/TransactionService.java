@@ -5,17 +5,23 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import com.pay_my_buddy.DTO.TransactionDTO;
 import com.pay_my_buddy.DTO.TransfereDTO;
 import com.pay_my_buddy.Model.Transaction;
+import com.pay_my_buddy.Model.User;
 import com.pay_my_buddy.Repository.TransactionRepository;
+
+import jakarta.transaction.Transactional;
 
 @Service
 public class TransactionService {
 
     private TransactionRepository transactionRepository;
+    private UserService userService;
 
-    public TransactionService(TransactionRepository transactionRepository) {
+    public TransactionService(TransactionRepository transactionRepository, UserService userService) {
         this.transactionRepository = transactionRepository;
+        this.userService = userService;
     }
 
     /**
@@ -48,6 +54,56 @@ public class TransactionService {
      */
     public Transaction addTransaction(Transaction transaction) {
         return transactionRepository.save(transaction);
+    }
+
+    @Transactional
+    public TransactionDTO processTransaction(int senderId, String relationId, String amountStr, String description) {
+        TransactionDTO transactionDTO = new TransactionDTO();
+
+        User sender = userService.getUserById(senderId);
+
+        int receiverId;
+        try {
+            receiverId = Integer.parseInt(relationId);
+        } catch (NumberFormatException e) {
+            transactionDTO.setError("Relation invalide.");
+            return transactionDTO;
+        }
+        User receiver = userService.getUserById(receiverId);
+
+        double amount;
+        try {
+            amount = Double.parseDouble(amountStr);
+        } catch (NumberFormatException e) {
+            transactionDTO.setError("Montant invalide.");
+            return transactionDTO;
+        }
+
+        Transaction transaction = new Transaction(description, amount, sender, receiver);
+        transactionDTO.setTransaction(transaction);
+
+        String error = validateTransaction(transaction);
+        if (error != null) {
+            transactionDTO.setError(error);
+        } else {
+            transactionDTO.setSuccess(amount + " EUR envoyé à " + receiver.getEmail());
+            addTransaction(transaction);
+        }
+
+        return transactionDTO;
+    }
+
+    public String validateTransaction(Transaction transaction) {
+        if (transaction.getReceiver() == null || transaction.getReceiver().getId() == 0) {
+            return "Sélectionnez une relation.";
+        }
+        if (transaction.getAmount() <= 0) {
+            return "Le montant doit être supérieur à 0.";
+        }
+        if (transaction.getSender().getAmount() < transaction.getAmount()) {
+            return "Solde insuffisant.";
+        }
+        return null;
     }
 
     /**

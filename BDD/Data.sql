@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Hôte : mysql:3306
--- Généré le : lun. 12 mai 2025 à 18:50
+-- Généré le : jeu. 15 mai 2025 à 14:44
 -- Version du serveur : 8.0.32
 -- Version de PHP : 8.2.28
 
@@ -42,7 +42,7 @@ CREATE TABLE `connections` (
 CREATE TABLE `transaction` (
   `id` int NOT NULL,
   `description` varchar(45) DEFAULT NULL,
-  `amount` int NOT NULL,
+  `amount` double NOT NULL,
   `sender_id` int NOT NULL,
   `receiver_id` int NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
@@ -58,7 +58,7 @@ CREATE TABLE `user` (
   `username` varchar(45) DEFAULT NULL,
   `email` varchar(45) NOT NULL,
   `password` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
-  `amount` int NOT NULL
+  `amount` double NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 
 --
@@ -66,7 +66,7 @@ CREATE TABLE `user` (
 --
 
 INSERT INTO `user` (`id`, `username`, `email`, `password`, `amount`) VALUES
-(1, 'Bank', 'Bank@Bank', '676c471bc8dc3d1324133cf087c20aa0137fc02348811e4162c79e560298fb11', 2076587);
+(1, 'Bank', 'Bank@Bank', '676c471bc8dc3d1324133cf087c20aa0137fc02348811e4162c79e560298fb11', 1050);
 
 --
 -- Index pour les tables déchargées
@@ -102,19 +102,19 @@ ALTER TABLE `user`
 -- AUTO_INCREMENT pour la table `connections`
 --
 ALTER TABLE `connections`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=47;
 
 --
 -- AUTO_INCREMENT pour la table `transaction`
 --
 ALTER TABLE `transaction`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
 
 --
 -- AUTO_INCREMENT pour la table `user`
 --
 ALTER TABLE `user`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- Contraintes pour les tables déchargées
